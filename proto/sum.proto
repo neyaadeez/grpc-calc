@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package calc;
+
+option go_package = "github.com/neyaadeez/grpc-calc/proto";
+
+message SumRequest {
+    int32 num_1 = 1;
+    int32 num_2 = 2;
+}
+
+message SumResponse {
+    int32 result = 1;
+}
