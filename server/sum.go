@@ -19,7 +19,7 @@ func (s *Server) PrimeNumbers(in *pb.PrimeNRequest, steam pb.CalcService_PrimeNu
 
 	var val int32 = in.Num
 	var k int32 = 2
-	for val != 0 {
+	for val > 1 {
 		if val%k == 0 {
 			steam.Send(&pb.PrimeNResponse{
 				Result: k,
