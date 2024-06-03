@@ -5,7 +5,9 @@ package calc;
 option go_package = "github.com/neyaadeez/grpc-calc/proto";
 
 import "sum.proto";
+import "prime.proto";
 
 service CalcService {
     rpc AddNumbers (SumRequest) returns (SumResponse);
+    rpc PrimeNumbers (PrimeNRequest) returns (stream PrimeNResponse);
 }

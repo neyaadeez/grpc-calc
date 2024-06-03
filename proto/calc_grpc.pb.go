@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	CalcService_AddNumbers_FullMethodName = "/calc.CalcService/AddNumbers"
+	CalcService_AddNumbers_FullMethodName   = "/calc.CalcService/AddNumbers"
+	CalcService_PrimeNumbers_FullMethodName = "/calc.CalcService/PrimeNumbers"
 )
 
 // CalcServiceClient is the client API for CalcService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalcServiceClient interface {
 	AddNumbers(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
+	PrimeNumbers(ctx context.Context, in *PrimeNRequest, opts ...grpc.CallOption) (CalcService_PrimeNumbersClient, error)
 }
 
 type calcServiceClient struct {
@@ -47,11 +49,45 @@ func (c *calcServiceClient) AddNumbers(ctx context.Context, in *SumRequest, opts
 	return out, nil
 }
 
+func (c *calcServiceClient) PrimeNumbers(ctx context.Context, in *PrimeNRequest, opts ...grpc.CallOption) (CalcService_PrimeNumbersClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &CalcService_ServiceDesc.Streams[0], CalcService_PrimeNumbers_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcServicePrimeNumbersClient{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CalcService_PrimeNumbersClient interface {
+	Recv() (*PrimeNResponse, error)
+	grpc.ClientStream
+}
+
+type calcServicePrimeNumbersClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcServicePrimeNumbersClient) Recv() (*PrimeNResponse, error) {
+	m := new(PrimeNResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations must embed UnimplementedCalcServiceServer
 // for forward compatibility
 type CalcServiceServer interface {
 	AddNumbers(context.Context, *SumRequest) (*SumResponse, error)
+	PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error
 	mustEmbedUnimplementedCalcServiceServer()
 }
 
@@ -61,6 +97,9 @@ type UnimplementedCalcServiceServer struct {
 
 func (UnimplementedCalcServiceServer) AddNumbers(context.Context, *SumRequest) (*SumResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNumbers not implemented")
+}
+func (UnimplementedCalcServiceServer) PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error {
+	return status.Errorf(codes.Unimplemented, "method PrimeNumbers not implemented")
 }
 func (UnimplementedCalcServiceServer) mustEmbedUnimplementedCalcServiceServer() {}
 
@@ -93,6 +132,27 @@ func _CalcService_AddNumbers_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalcService_PrimeNumbers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PrimeNRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CalcServiceServer).PrimeNumbers(m, &calcServicePrimeNumbersServer{ServerStream: stream})
+}
+
+type CalcService_PrimeNumbersServer interface {
+	Send(*PrimeNResponse) error
+	grpc.ServerStream
+}
+
+type calcServicePrimeNumbersServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcServicePrimeNumbersServer) Send(m *PrimeNResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -105,6 +165,12 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CalcService_AddNumbers_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "PrimeNumbers",
+			Handler:       _CalcService_PrimeNumbers_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "calc.proto",
 }

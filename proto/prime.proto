@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package calc;
+
+option go_package = "github.com/neyaadeez/grpc-calc/proto";
+
+message PrimeNRequest {
+    int32 num = 1;
+}
+
+message PrimeNResponse {
+    int32 result = 1;
+}
