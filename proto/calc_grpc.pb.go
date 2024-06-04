@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion8
 const (
 	CalcService_AddNumbers_FullMethodName   = "/calc.CalcService/AddNumbers"
 	CalcService_PrimeNumbers_FullMethodName = "/calc.CalcService/PrimeNumbers"
+	CalcService_AvgNumbers_FullMethodName   = "/calc.CalcService/AvgNumbers"
 )
 
 // CalcServiceClient is the client API for CalcService service.
@@ -29,6 +30,7 @@ const (
 type CalcServiceClient interface {
 	AddNumbers(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
 	PrimeNumbers(ctx context.Context, in *PrimeNRequest, opts ...grpc.CallOption) (CalcService_PrimeNumbersClient, error)
+	AvgNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_AvgNumbersClient, error)
 }
 
 type calcServiceClient struct {
@@ -82,12 +84,48 @@ func (x *calcServicePrimeNumbersClient) Recv() (*PrimeNResponse, error) {
 	return m, nil
 }
 
+func (c *calcServiceClient) AvgNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_AvgNumbersClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &CalcService_ServiceDesc.Streams[1], CalcService_AvgNumbers_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcServiceAvgNumbersClient{ClientStream: stream}
+	return x, nil
+}
+
+type CalcService_AvgNumbersClient interface {
+	Send(*AvgNRequest) error
+	CloseAndRecv() (*AvgResponse, error)
+	grpc.ClientStream
+}
+
+type calcServiceAvgNumbersClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcServiceAvgNumbersClient) Send(m *AvgNRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calcServiceAvgNumbersClient) CloseAndRecv() (*AvgResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(AvgResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations must embed UnimplementedCalcServiceServer
 // for forward compatibility
 type CalcServiceServer interface {
 	AddNumbers(context.Context, *SumRequest) (*SumResponse, error)
 	PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error
+	AvgNumbers(CalcService_AvgNumbersServer) error
 	mustEmbedUnimplementedCalcServiceServer()
 }
 
@@ -100,6 +138,9 @@ func (UnimplementedCalcServiceServer) AddNumbers(context.Context, *SumRequest) (
 }
 func (UnimplementedCalcServiceServer) PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error {
 	return status.Errorf(codes.Unimplemented, "method PrimeNumbers not implemented")
+}
+func (UnimplementedCalcServiceServer) AvgNumbers(CalcService_AvgNumbersServer) error {
+	return status.Errorf(codes.Unimplemented, "method AvgNumbers not implemented")
 }
 func (UnimplementedCalcServiceServer) mustEmbedUnimplementedCalcServiceServer() {}
 
@@ -153,6 +194,32 @@ func (x *calcServicePrimeNumbersServer) Send(m *PrimeNResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _CalcService_AvgNumbers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalcServiceServer).AvgNumbers(&calcServiceAvgNumbersServer{ServerStream: stream})
+}
+
+type CalcService_AvgNumbersServer interface {
+	SendAndClose(*AvgResponse) error
+	Recv() (*AvgNRequest, error)
+	grpc.ServerStream
+}
+
+type calcServiceAvgNumbersServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcServiceAvgNumbersServer) SendAndClose(m *AvgResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calcServiceAvgNumbersServer) Recv() (*AvgNRequest, error) {
+	m := new(AvgNRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +237,11 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "PrimeNumbers",
 			Handler:       _CalcService_PrimeNumbers_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "AvgNumbers",
+			Handler:       _CalcService_AvgNumbers_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "calc.proto",
