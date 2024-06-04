@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package calc;
+
+option go_package = "github.com/neyaadeez/grpc-calc/proto";
+
+message StreamNRequest {
+    int32 Num = 1;
+}
+
+message StreamNResponse {
+    int32 Res = 1;
+}

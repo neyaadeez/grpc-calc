@@ -7,9 +7,11 @@ option go_package = "github.com/neyaadeez/grpc-calc/proto";
 import "sum.proto";
 import "prime.proto";
 import "avg.proto";
+import "stre.proto";
 
 service CalcService {
     rpc AddNumbers (SumRequest) returns (SumResponse);
     rpc PrimeNumbers (PrimeNRequest) returns (stream PrimeNResponse);
     rpc AvgNumbers (stream AvgNRequest) returns (AvgResponse);
+    rpc StreamNumbers (stream StreamNRequest) returns (stream StreamNResponse);
 }
