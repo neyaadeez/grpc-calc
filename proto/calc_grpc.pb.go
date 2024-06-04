@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	CalcService_AddNumbers_FullMethodName   = "/calc.CalcService/AddNumbers"
-	CalcService_PrimeNumbers_FullMethodName = "/calc.CalcService/PrimeNumbers"
-	CalcService_AvgNumbers_FullMethodName   = "/calc.CalcService/AvgNumbers"
+	CalcService_AddNumbers_FullMethodName    = "/calc.CalcService/AddNumbers"
+	CalcService_PrimeNumbers_FullMethodName  = "/calc.CalcService/PrimeNumbers"
+	CalcService_AvgNumbers_FullMethodName    = "/calc.CalcService/AvgNumbers"
+	CalcService_StreamNumbers_FullMethodName = "/calc.CalcService/StreamNumbers"
 )
 
 // CalcServiceClient is the client API for CalcService service.
@@ -31,6 +32,7 @@ type CalcServiceClient interface {
 	AddNumbers(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
 	PrimeNumbers(ctx context.Context, in *PrimeNRequest, opts ...grpc.CallOption) (CalcService_PrimeNumbersClient, error)
 	AvgNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_AvgNumbersClient, error)
+	StreamNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_StreamNumbersClient, error)
 }
 
 type calcServiceClient struct {
@@ -119,6 +121,38 @@ func (x *calcServiceAvgNumbersClient) CloseAndRecv() (*AvgResponse, error) {
 	return m, nil
 }
 
+func (c *calcServiceClient) StreamNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_StreamNumbersClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &CalcService_ServiceDesc.Streams[2], CalcService_StreamNumbers_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcServiceStreamNumbersClient{ClientStream: stream}
+	return x, nil
+}
+
+type CalcService_StreamNumbersClient interface {
+	Send(*StreamNRequest) error
+	Recv() (*StreamNResponse, error)
+	grpc.ClientStream
+}
+
+type calcServiceStreamNumbersClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcServiceStreamNumbersClient) Send(m *StreamNRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calcServiceStreamNumbersClient) Recv() (*StreamNResponse, error) {
+	m := new(StreamNResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations must embed UnimplementedCalcServiceServer
 // for forward compatibility
@@ -126,6 +160,7 @@ type CalcServiceServer interface {
 	AddNumbers(context.Context, *SumRequest) (*SumResponse, error)
 	PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error
 	AvgNumbers(CalcService_AvgNumbersServer) error
+	StreamNumbers(CalcService_StreamNumbersServer) error
 	mustEmbedUnimplementedCalcServiceServer()
 }
 
@@ -141,6 +176,9 @@ func (UnimplementedCalcServiceServer) PrimeNumbers(*PrimeNRequest, CalcService_P
 }
 func (UnimplementedCalcServiceServer) AvgNumbers(CalcService_AvgNumbersServer) error {
 	return status.Errorf(codes.Unimplemented, "method AvgNumbers not implemented")
+}
+func (UnimplementedCalcServiceServer) StreamNumbers(CalcService_StreamNumbersServer) error {
+	return status.Errorf(codes.Unimplemented, "method StreamNumbers not implemented")
 }
 func (UnimplementedCalcServiceServer) mustEmbedUnimplementedCalcServiceServer() {}
 
@@ -220,6 +258,32 @@ func (x *calcServiceAvgNumbersServer) Recv() (*AvgNRequest, error) {
 	return m, nil
 }
 
+func _CalcService_StreamNumbers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalcServiceServer).StreamNumbers(&calcServiceStreamNumbersServer{ServerStream: stream})
+}
+
+type CalcService_StreamNumbersServer interface {
+	Send(*StreamNResponse) error
+	Recv() (*StreamNRequest, error)
+	grpc.ServerStream
+}
+
+type calcServiceStreamNumbersServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcServiceStreamNumbersServer) Send(m *StreamNResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calcServiceStreamNumbersServer) Recv() (*StreamNRequest, error) {
+	m := new(StreamNRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -241,6 +305,12 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AvgNumbers",
 			Handler:       _CalcService_AvgNumbers_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "StreamNumbers",
+			Handler:       _CalcService_StreamNumbers_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
