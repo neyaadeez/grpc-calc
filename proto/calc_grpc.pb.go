@@ -23,6 +23,7 @@ const (
 	CalcService_PrimeNumbers_FullMethodName  = "/calc.CalcService/PrimeNumbers"
 	CalcService_AvgNumbers_FullMethodName    = "/calc.CalcService/AvgNumbers"
 	CalcService_StreamNumbers_FullMethodName = "/calc.CalcService/StreamNumbers"
+	CalcService_Sqrt_FullMethodName          = "/calc.CalcService/Sqrt"
 )
 
 // CalcServiceClient is the client API for CalcService service.
@@ -33,6 +34,7 @@ type CalcServiceClient interface {
 	PrimeNumbers(ctx context.Context, in *PrimeNRequest, opts ...grpc.CallOption) (CalcService_PrimeNumbersClient, error)
 	AvgNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_AvgNumbersClient, error)
 	StreamNumbers(ctx context.Context, opts ...grpc.CallOption) (CalcService_StreamNumbersClient, error)
+	Sqrt(ctx context.Context, in *SqrtRequest, opts ...grpc.CallOption) (*SqrtResponse, error)
 }
 
 type calcServiceClient struct {
@@ -153,6 +155,16 @@ func (x *calcServiceStreamNumbersClient) Recv() (*StreamNResponse, error) {
 	return m, nil
 }
 
+func (c *calcServiceClient) Sqrt(ctx context.Context, in *SqrtRequest, opts ...grpc.CallOption) (*SqrtResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SqrtResponse)
+	err := c.cc.Invoke(ctx, CalcService_Sqrt_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations must embed UnimplementedCalcServiceServer
 // for forward compatibility
@@ -161,6 +173,7 @@ type CalcServiceServer interface {
 	PrimeNumbers(*PrimeNRequest, CalcService_PrimeNumbersServer) error
 	AvgNumbers(CalcService_AvgNumbersServer) error
 	StreamNumbers(CalcService_StreamNumbersServer) error
+	Sqrt(context.Context, *SqrtRequest) (*SqrtResponse, error)
 	mustEmbedUnimplementedCalcServiceServer()
 }
 
@@ -179,6 +192,9 @@ func (UnimplementedCalcServiceServer) AvgNumbers(CalcService_AvgNumbersServer) e
 }
 func (UnimplementedCalcServiceServer) StreamNumbers(CalcService_StreamNumbersServer) error {
 	return status.Errorf(codes.Unimplemented, "method StreamNumbers not implemented")
+}
+func (UnimplementedCalcServiceServer) Sqrt(context.Context, *SqrtRequest) (*SqrtResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Sqrt not implemented")
 }
 func (UnimplementedCalcServiceServer) mustEmbedUnimplementedCalcServiceServer() {}
 
@@ -284,6 +300,24 @@ func (x *calcServiceStreamNumbersServer) Recv() (*StreamNRequest, error) {
 	return m, nil
 }
 
+func _CalcService_Sqrt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SqrtRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServiceServer).Sqrt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CalcService_Sqrt_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServiceServer).Sqrt(ctx, req.(*SqrtRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -294,6 +328,10 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddNumbers",
 			Handler:    _CalcService_AddNumbers_Handler,
+		},
+		{
+			MethodName: "Sqrt",
+			Handler:    _CalcService_Sqrt_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

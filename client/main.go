@@ -21,5 +21,8 @@ func main() {
 	c := pb.NewCalcServiceClient(conn)
 	// doSum(c)
 	// doPrime(c)
-	doAvg(c)
+	// doAvg(c)
+	// doStream(c)
+	doSqrt(c, 64)
+	doSqrt(c, -20)
 }
