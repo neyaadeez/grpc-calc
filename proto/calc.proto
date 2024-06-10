@@ -8,10 +8,12 @@ import "sum.proto";
 import "prime.proto";
 import "avg.proto";
 import "stre.proto";
+import "sqrt.proto";
 
 service CalcService {
     rpc AddNumbers (SumRequest) returns (SumResponse);
     rpc PrimeNumbers (PrimeNRequest) returns (stream PrimeNResponse);
     rpc AvgNumbers (stream AvgNRequest) returns (AvgResponse);
     rpc StreamNumbers (stream StreamNRequest) returns (stream StreamNResponse);
+    rpc Sqrt (SqrtRequest) returns (SqrtResponse);
 }

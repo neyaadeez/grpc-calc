@@ -22,5 +22,7 @@ func main() {
 	// doSum(c)
 	// doPrime(c)
 	// doAvg(c)
-	doStream(c)
+	// doStream(c)
+	doSqrt(c, 64)
+	doSqrt(c, -20)
 }
